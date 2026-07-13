@@ -1,0 +1,10 @@
+{
+  "name": "Everything — Agenda Personale",
+  "short_name": "Everything",
+  "description": "Streak, agenda, note, fitness e notizie in un'unica app personale.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0E0F11",
+  "theme_color": "#0E0F11",
+  "orientation": "portrait"
+}

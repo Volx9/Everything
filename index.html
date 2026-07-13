@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0E0F11">
+<title>Everything — Agenda Personale</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E0F11;
+    --surface:#1A1B1E;
+    --surface-2:#232427;
+    --border:#2A2C30;
+    --text:#EDEDE8;
+    --text-dim:#8B8C90;
+    --ember:#E3A857;
+    --ember-glow:#F2C077;
+    --ember-dim:#6B5636;
+    --danger:#C0574F;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--bg); color:var(--text);
+    font-family:'Inter',-apple-system,sans-serif;
+    overscroll-behavior:none;
+  }
+  h1,h2,h3,.display{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    letter-spacing:-0.01em;
+  }
+
+  /* ---------- SPLASH ---------- */
+  #splash{
+    position:fixed; inset:0; z-index:100;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:32px; text-align:center;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(227,168,87,0.10), transparent 60%),
+      var(--bg);
+    transition:opacity .6s ease, visibility .6s ease;
+  }
+  #splash.hidden{ opacity:0; visibility:hidden; pointer-events:none; }
+  #splash .mark{
+    width:46px; height:46px; margin-bottom:28px;
+    opacity:.9;
+  }
+  #splash .wordmark{
+    font-size:11px; color:var(--text-dim);
+    letter-spacing:.28em; text-transform:uppercase;
+    margin-bottom:22px;
+  }
+  #splash .quote{
+    font-family:'Fraunces',serif;
+    font-size:22px; line-height:1.45; font-weight:500;
+    max-width:320px; color:var(--text);
+  }
+  #splash .quote::before{ content:"\201C"; color:var(--ember); }
+  #splash .quote::after{ content:"\201D"; color:var(--ember); }
+  #splash .hint{
+    margin-top:36px; font-size:12px; color:var(--text-dim);
+    letter-spacing:.08em; text-transform:uppercase;
+  }
+
+  /* ---------- APP SHELL ---------- */
+  #app{
+    display:flex; flex-direction:column;
+    height:100%;
+    opacity:0; transition:opacity .5s ease;
+  }
+  #app.visible{ opacity:1; }
+
+  header.top{
+    padding:calc(var(--safe-top) + 20px) 22px 14px;
+    display:flex; flex-direction:column; gap:2px;
+  }
+  header.top .wordmark{
+    font-size:10px; color:var(--text-dim);
+    letter-spacing:.28em; text-transform:uppercase;
+    margin-bottom:4px;
+  }
+  header.top .greeting{ font-size:22px; }
+  header.top .date{ font-size:13px; color:var(--text-dim); text-transform:capitalize; }
+
+  main{
+    flex:1; overflow-y:auto;
+    padding:6px 18px calc(90px + var(--safe-bottom));
+  }
+
+  section.view{ display:none; }
+  section.view.active{ display:block; animation:fade .35s ease; }
+  @keyframes fade{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+
+  /* ---------- STREAK ---------- */
+  .section-title{
+    font-size:14px; color:var(--text-dim);
+    text-transform:uppercase; letter-spacing:.08em;
+    margin:18px 4px 10px;
+  }
+  .add-goal{
+    display:flex; gap:8px; margin:4px 4px 18px;
+  }
+  .add-goal input{
+    flex:1; background:var(--surface); border:1px solid var(--border);
+    color:var(--text); border-radius:12px; padding:13px 14px;
+    font-size:15px; font-family:'Inter',sans-serif;
+  }
+  .add-goal input::placeholder{ color:var(--text-dim); }
+  .add-goal button{
+    background:var(--ember); color:#1a1408; border:none;
+    border-radius:12px; padding:0 18px; font-weight:600; font-size:14px;
+  }
+  .goal-card{
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; padding:16px; margin-bottom:12px;
+    display:flex; flex-direction:column;
+  }
+  .goal-top{ display:flex; align-items:center; gap:14px; }
+  .flame{
+    width:46px; height:46px; flex:none; position:relative;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .flame svg{ width:100%; height:100%; }
+  .flame-badge{
+    position:absolute; width:62%; height:62%; border-radius:50%;
+    background:var(--bg); box-shadow:0 0 0 1px var(--border);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .flame .count{
+    font-family:'Fraunces',serif; font-weight:600;
+    font-size:16px; line-height:1;
+  }
+  .goal-info{ flex:1; min-width:0; }
+  .goal-info .name{ font-size:15px; font-weight:600; }
+  .goal-info .meta{ font-size:12px; color:var(--text-dim); margin-top:2px; }
+  .goal-info .meta.risk{ color:var(--danger); }
+  .goal-actions{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .check-btn{
+    width:38px; height:38px; border-radius:50%;
+    border:2px solid var(--ember-dim); background:transparent;
+    color:var(--ember); font-size:18px; display:flex; align-items:center; justify-content:center;
+  }
+  .check-btn.done{ background:var(--ember); border-color:var(--ember); color:#1a1408; }
+  .del-btn{ background:none; border:none; color:var(--text-dim); font-size:11px; }
+
+  .heatmap{
+    display:grid; grid-template-columns:repeat(10, 1fr); gap:4px;
+    margin-top:16px; padding-top:14px; border-top:1px solid var(--border);
+  }
+  .heatmap-cell{
+    aspect-ratio:1; border-radius:3px; background:var(--surface-2);
+  }
+  .heatmap-cell.active{ background:var(--ember); }
+  .heatmap-cell.today-cell{ box-shadow:0 0 0 1px var(--ember-dim) inset; }
+
+  .empty-state{
+    margin-top:40px; text-align:center; color:var(--text-dim);
+    padding:0 20px;
+  }
+  .empty-state .display{ color:var(--text); font-size:18px; margin-bottom:6px; }
+
+  .coming-soon{
+    margin-top:60px; text-align:center; color:var(--text-dim); padding:0 30px;
+  }
+  .coming-soon .display{ color:var(--text); font-size:20px; margin-bottom:8px; }
+
+  /* ---------- AGENDA ---------- */
+  .cal-header{
+    display:flex; align-items:center; justify-content:space-between;
+    margin:14px 4px 12px;
+  }
+  .cal-header button{
+    background:var(--surface); border:1px solid var(--border); color:var(--text);
+    width:34px; height:34px; border-radius:10px; font-size:16px;
+  }
+  .cal-title{ font-family:'Fraunces',serif; font-size:17px; text-transform:capitalize; }
+  .cal-weekdays{
+    display:grid; grid-template-columns:repeat(7,1fr);
+    text-align:center; font-size:11px; color:var(--text-dim);
+    margin-bottom:6px; letter-spacing:.04em;
+  }
+  .cal-grid{
+    display:grid; grid-template-columns:repeat(7,1fr); gap:4px;
+    margin-bottom:22px;
+  }
+  .cal-cell{
+    aspect-ratio:1; border-radius:10px; background:var(--surface);
+    border:1px solid transparent;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-size:13px; color:var(--text); position:relative;
+  }
+  .cal-cell.empty{ background:transparent; }
+  .cal-cell.today{ border-color:var(--ember-dim); }
+  .cal-cell.selected{ background:var(--ember); color:#1a1408; font-weight:600; }
+  .cal-cell .dot{
+    width:4px; height:4px; border-radius:50%; background:var(--ember);
+    position:absolute; bottom:6px;
+  }
+  .cal-cell.selected .dot{ background:#1a1408; }
+  .day-panel{ border-top:1px solid var(--border); padding-top:16px; }
+  .appt-row{
+    display:flex; align-items:center; gap:12px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:12px 14px; margin-bottom:10px;
+  }
+  .appt-row .time{
+    font-family:'Fraunces',serif; font-weight:600; color:var(--ember);
+    font-size:14px; min-width:44px;
+  }
+  .appt-row .title{ flex:1; font-size:14px; }
+  .appt-row .del-btn{ background:none; border:none; color:var(--text-dim); font-size:11px; }
+  .empty-day{ color:var(--text-dim); font-size:13px; padding:6px 4px; }
+
+  /* ---------- NOTE ---------- */
+  .note-input{
+    width:100%; min-height:96px; background:var(--surface);
+    border:1px solid var(--border); border-radius:14px; color:var(--text);
+    font-family:'Inter',sans-serif; font-size:15px; padding:14px;
+    resize:vertical; margin:14px 0 10px;
+  }
+  .note-input::placeholder{ color:var(--text-dim); }
+  .note-save{
+    background:var(--ember); color:#1a1408; border:none;
+    border-radius:12px; padding:11px 18px; font-weight:600; font-size:14px;
+    margin-bottom:22px;
+  }
+  .note-card{
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:14px 16px; margin-bottom:10px;
+  }
+  .note-card .note-date{ font-size:11px; color:var(--text-dim); margin-bottom:6px; }
+  .note-card .note-text{ font-size:14px; white-space:pre-wrap; line-height:1.5; }
+  .note-card .del-btn{ margin-top:8px; }
+
+  /* ---------- FITNESS ---------- */
+  .weekday-row{
+    display:grid; grid-template-columns:repeat(7,1fr); gap:6px;
+    margin:14px 0 20px;
+  }
+  .weekday-pill{
+    background:var(--surface); border:1px solid var(--border); color:var(--text-dim);
+    border-radius:10px; padding:10px 0; font-size:12px; text-align:center;
+  }
+  .weekday-pill.today{ border-color:var(--ember-dim); }
+  .weekday-pill.selected{ background:var(--ember); color:#1a1408; font-weight:600; border-color:var(--ember); }
+  .fit-block{ margin-bottom:20px; }
+  .fit-block textarea{
+    width:100%; min-height:110px; background:var(--surface);
+    border:1px solid var(--border); border-radius:14px; color:var(--text);
+    font-family:'Inter',sans-serif; font-size:14px; padding:14px;
+    resize:vertical; line-height:1.5;
+  }
+  .fit-block textarea::placeholder{ color:var(--text-dim); }
+  .fit-save{
+    background:var(--ember); color:#1a1408; border:none;
+    border-radius:12px; padding:11px 18px; font-weight:600; font-size:14px;
+    margin-top:16px;
+  }
+
+  /* ---------- NOTIZIE ---------- */
+  .news-cat{ margin:14px 0 20px; }
+  .news-link{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:14px 16px; margin-bottom:8px;
+    color:var(--text); text-decoration:none; font-size:14px;
+  }
+  .news-link .arrow{ color:var(--text-dim); font-size:14px; }
+
+  /* ---------- HOME ---------- */
+  @keyframes cardIn{
+    from{ opacity:0; transform:translateY(10px); }
+    to{ opacity:1; transform:none; }
+  }
+  .home-card{
+    animation:cardIn .45s ease both;
+  }
+  .home-card:nth-child(1){ animation-delay:.03s; }
+  .home-card:nth-child(2){ animation-delay:.09s; }
+  .home-card:nth-child(3){ animation-delay:.15s; }
+  .home-card:nth-child(4){ animation-delay:.21s; }
+
+  .home-quote{
+    font-family:'Fraunces',serif; font-size:16px; font-style:italic;
+    color:var(--text-dim); line-height:1.5; margin:16px 4px 22px;
+  }
+  .home-quote::before{ content:"\201C"; color:var(--ember); font-style:normal; }
+  .home-quote::after{ content:"\201D"; color:var(--ember); font-style:normal; }
+
+  .home-section-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin:4px 4px 10px;
+  }
+  .home-section-head .section-title{ margin:0; }
+
+  .btn-text{
+    background:none; border:none; color:var(--ember);
+    font-size:13px; font-weight:600; padding:6px 2px;
+    transition:opacity .15s ease;
+  }
+  .btn-text:active{ opacity:.6; transform:scale(.97); }
+
+  .highlight-grid{ display:flex; flex-direction:column; gap:10px; margin-bottom:6px; }
+  .highlight-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:14px 16px; display:flex; align-items:center; gap:14px;
+  }
+  .highlight-card .flame{ width:38px; height:38px; }
+  .highlight-card .flame .count{ font-size:13px; }
+  .highlight-info{ flex:1; min-width:0; }
+  .highlight-info .name{ font-size:14px; font-weight:600; }
+  .progress-track{
+    height:5px; border-radius:3px; background:var(--surface-2);
+    margin-top:8px; overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; background:var(--ember); border-radius:3px;
+    transition:width .4s ease;
+  }
+  .quick-check{
+    width:36px; height:36px; border-radius:50%; flex:none;
+    border:2px solid var(--ember-dim); background:transparent; color:var(--ember);
+    display:flex; align-items:center; justify-content:center; font-size:16px;
+    transition:transform .15s ease;
+  }
+  .quick-check:active{ transform:scale(.9); }
+  .quick-check.done{ background:var(--ember); border-color:var(--ember); color:#1a1408; }
+
+  .today-appt-row{
+    display:flex; align-items:center; gap:12px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:12px 14px; margin-bottom:8px;
+  }
+  .today-appt-row .time{ font-family:'Fraunces',serif; font-weight:600; color:var(--ember); font-size:14px; min-width:44px; }
+  .today-appt-row .title{ flex:1; font-size:14px; }
+
+  .mood-summary{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:14px 16px; font-size:14px; display:flex; align-items:center; gap:10px;
+  }
+  .mood-summary .emoji{ font-size:20px; }
+
+  .btn-primary-sm{
+    display:block; width:100%; text-align:center;
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    border-radius:12px; padding:12px; font-size:13px; font-weight:600;
+    margin-top:10px; transition:transform .15s ease;
+  }
+  .btn-primary-sm:active{ transform:scale(.98); }
+
+  /* ---------- MOOD MODAL ---------- */
+  #moodOverlay{
+    position:fixed; inset:0; z-index:90;
+    background:rgba(6,7,8,0.6); backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center;
+    padding:28px; opacity:0; visibility:hidden;
+    transition:opacity .3s ease, visibility .3s ease;
+  }
+  #moodOverlay.visible{ opacity:1; visibility:visible; }
+  .mood-modal{
+    background:var(--surface); border:1px solid var(--border); border-radius:20px;
+    padding:26px 22px; width:100%; max-width:320px; text-align:center;
+    transform:scale(.92) translateY(8px); transition:transform .3s ease;
+  }
+  #moodOverlay.visible .mood-modal{ transform:none; }
+  .mood-modal h3{ font-size:17px; margin:0 0 18px; }
+  .mood-options{ display:flex; justify-content:space-between; gap:6px; }
+  .mood-option{
+    background:none; border:none; display:flex; flex-direction:column;
+    align-items:center; gap:6px; font-size:26px; padding:6px 2px;
+    color:var(--text-dim); flex:1; border-radius:12px;
+    transition:transform .15s ease, background .15s ease;
+  }
+  .mood-option:active{ transform:scale(.88); background:var(--surface-2); }
+  .mood-option .lbl{ font-size:10px; font-family:'Inter',sans-serif; color:var(--text-dim); }
+
+  /* ---------- MOOD: STORICO ---------- */
+  #moodHistoryOverlay{
+    position:fixed; inset:0; z-index:90;
+    background:rgba(6,7,8,0.6); backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center;
+    padding:24px; opacity:0; visibility:hidden;
+    transition:opacity .3s ease, visibility .3s ease;
+  }
+  #moodHistoryOverlay.visible{ opacity:1; visibility:visible; }
+  .mood-history-modal{
+    background:var(--surface); border:1px solid var(--border); border-radius:20px;
+    padding:20px 18px; width:100%; max-width:340px;
+    transform:scale(.94) translateY(8px); transition:transform .3s ease;
+  }
+  #moodHistoryOverlay.visible .mood-history-modal{ transform:none; }
+  .cal-daynum{ font-size:9px; color:var(--text-dim); }
+  .emoji-cell{ font-size:15px; margin-top:1px; }
+
+  .weather-chip{
+    display:flex; align-items:center; gap:6px;
+    font-size:12px; color:var(--text-dim);
+    margin:2px 4px 0;
+  }
+  .weather-chip svg{ width:15px; height:15px; flex:none; }
+
+  /* ---------- BOTTOM NAV ---------- */
+  nav.bottom{
+    position:fixed; left:0; right:0; bottom:0; z-index:20;
+    display:flex; justify-content:space-around;
+    padding:10px 8px calc(10px + var(--safe-bottom));
+    background:rgba(26,27,30,0.92); backdrop-filter:blur(14px);
+    border-top:1px solid var(--border);
+  }
+  nav.bottom button{
+    background:none; border:none; color:var(--text-dim);
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    font-size:9.5px; font-family:'Inter',sans-serif; padding:4px 4px;
+  }
+  nav.bottom button svg{ width:21px; height:21px; }
+  nav.bottom button.active{ color:var(--ember); }
+</style>
+</head>
+<body>
+
+  <div id="splash">
+    <svg class="mark" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2C12 2 6 9 6 14a6 6 0 0 0 12 0c0-2-1-3.5-2-5 0 2-1 3-2 3-1.5 0-1.5-2-1.5-3.5C12.5 6 12 2 12 2Z" fill="#E3A857"/>
+    </svg>
+    <div class="wordmark">Everything</div>
+    <div class="quote" id="quoteText"></div>
+    <div class="hint">Tocca per continuare</div>
+  </div>
+
+  <div id="app">
+    <header class="top">
+      <div class="wordmark">Everything</div>
+      <div class="greeting display" id="greeting">Ciao</div>
+      <div class="date" id="today"></div>
+    </header>
+
+    <main>
+      <section class="view active" id="view-home">
+        <div class="weather-chip home-card" id="weatherChip"></div>
+        <div class="home-quote home-card" id="homeQuote"></div>
+
+        <div class="home-section-head home-card">
+          <div class="section-title">Streak in evidenza</div>
+        </div>
+        <div class="highlight-grid" id="homeStreaks"></div>
+        <button class="btn-text home-card" id="goToStreak">Visualizza tutte le streak →</button>
+
+        <div class="home-section-head home-card" style="margin-top:26px">
+          <div class="section-title">Agenda di oggi</div>
+        </div>
+        <div id="homeAgenda" class="home-card"></div>
+        <button class="btn-primary-sm home-card" id="goToAgenda">Apri Agenda</button>
+
+        <div class="home-section-head home-card" style="margin-top:26px">
+          <div class="section-title">Mood</div>
+        </div>
+        <div class="mood-summary home-card" id="moodSummary"></div>
+        <button class="btn-text home-card" id="openMoodHistory">Vedi storico →</button>
+      </section>
+
+      <section class="view" id="view-streak">
+        <div class="section-title">I tuoi obiettivi</div>
+        <div class="add-goal">
+          <input type="text" id="goalInput" placeholder="Es. Smettere di fumare" maxlength="40">
+          <button id="addGoalBtn">Aggiungi</button>
+        </div>
+        <div id="goalsList"></div>
+        <div class="empty-state" id="emptyState" style="display:none">
+          <div class="display">Nessun obiettivo ancora</div>
+          <div>Aggiungine uno per iniziare la tua prima streak.</div>
+        </div>
+      </section>
+
+      <section class="view" id="view-agenda">
+        <div class="cal-header">
+          <button id="calPrev" aria-label="Mese precedente">‹</button>
+          <div class="cal-title" id="calTitle"></div>
+          <button id="calNext" aria-label="Mese successivo">›</button>
+        </div>
+        <div class="cal-weekdays">
+          <div>L</div><div>M</div><div>M</div><div>G</div><div>V</div><div>S</div><div>D</div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+
+        <div class="day-panel">
+          <div class="section-title" id="dayPanelTitle">Appuntamenti</div>
+          <div class="add-goal">
+            <input type="time" id="apptTime" style="max-width:100px">
+            <input type="text" id="apptTitle" placeholder="Es. Dentista" maxlength="40">
+            <button id="addApptBtn">Aggiungi</button>
+          </div>
+          <div id="apptList"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-fitness">
+        <div class="section-title">Giorno</div>
+        <div class="weekday-row" id="weekdayRow"></div>
+
+        <div class="fit-block">
+          <div class="section-title" style="margin-top:0">Allenamento</div>
+          <textarea id="fitWorkout" placeholder="Es. Petto e tricipiti: panca piana 4x8, croci 3x12..."></textarea>
+        </div>
+
+        <div class="fit-block">
+          <div class="section-title" style="margin-top:0">Alimentazione</div>
+          <textarea id="fitDiet" placeholder="Es. Colazione: fiocchi d'avena e yogurt. Pranzo: riso e pollo..."></textarea>
+        </div>
+
+        <button class="fit-save" id="saveFitBtn">Salva giorno</button>
+      </section>
+
+      <section class="view" id="view-notizie">
+        <div class="news-cat">
+          <div class="section-title" style="margin-top:0">Italia</div>
+          <a class="news-link" href="https://www.ansa.it" target="_blank" rel="noopener"><span>ANSA</span><span class="arrow">↗</span></a>
+          <a class="news-link" href="https://www.ilpost.it" target="_blank" rel="noopener"><span>Il Post</span><span class="arrow">↗</span></a>
+        </div>
+        <div class="news-cat">
+          <div class="section-title" style="margin-top:0">Mondo</div>
+          <a class="news-link" href="https://www.bbc.com/news" target="_blank" rel="noopener"><span>BBC News</span><span class="arrow">↗</span></a>
+          <a class="news-link" href="https://www.reuters.com" target="_blank" rel="noopener"><span>Reuters</span><span class="arrow">↗</span></a>
+        </div>
+        <div class="news-cat">
+          <div class="section-title" style="margin-top:0">Tecnologia e AI</div>
+          <a class="news-link" href="https://www.wired.it" target="_blank" rel="noopener"><span>Wired Italia</span><span class="arrow">↗</span></a>
+          <a class="news-link" href="https://www.theverge.com" target="_blank" rel="noopener"><span>The Verge</span><span class="arrow">↗</span></a>
+        </div>
+        <div class="news-cat">
+          <div class="section-title" style="margin-top:0">Business</div>
+          <a class="news-link" href="https://www.ilsole24ore.com" target="_blank" rel="noopener"><span>Il Sole 24 Ore</span><span class="arrow">↗</span></a>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom">
+      <button class="nav-btn" data-view="streak">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2C12 2 6 9 6 14a6 6 0 0 0 12 0c0-2-1-3.5-2-5 0 2-1 3-2 3-1.5 0-1.5-2-1.5-3.5C12.5 6 12 2 12 2Z"/></svg>
+        Streak
+      </button>
+      <button class="nav-btn" data-view="agenda">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        Agenda
+      </button>
+      <button class="nav-btn active" data-view="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9"/></svg>
+        Home
+      </button>
+      <button class="nav-btn" data-view="fitness">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 12h12M4 9v6M20 9v6M7 7v10M17 7v10"/></svg>
+        Fitness
+      </button>
+      <button class="nav-btn" data-view="notizie">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>
+        Notizie
+      </button>
+    </nav>
+  </div>
+
+  <div id="moodOverlay">
+    <div class="mood-modal">
+      <h3 class="display">Come ti senti oggi?</h3>
+      <div class="mood-options">
+        <button class="mood-option" data-mood="fantastico" data-emoji="😁"><span>😁</span><span class="lbl">Fantastico</span></button>
+        <button class="mood-option" data-mood="bene" data-emoji="🙂"><span>🙂</span><span class="lbl">Bene</span></button>
+        <button class="mood-option" data-mood="normale" data-emoji="😐"><span>😐</span><span class="lbl">Normale</span></button>
+        <button class="mood-option" data-mood="giu" data-emoji="😔"><span>😔</span><span class="lbl">Giù</span></button>
+        <button class="mood-option" data-mood="male" data-emoji="😫"><span>😫</span><span class="lbl">Molto male</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="moodHistoryOverlay">
+    <div class="mood-history-modal">
+      <div class="cal-header">
+        <button id="moodCalPrev" aria-label="Mese precedente">‹</button>
+        <div class="cal-title" id="moodCalTitle"></div>
+        <button id="moodCalNext" aria-label="Mese successivo">›</button>
+      </div>
+      <div class="cal-weekdays">
+        <div>L</div><div>M</div><div>M</div><div>G</div><div>V</div><div>S</div><div>D</div>
+      </div>
+      <div class="cal-grid" id="moodCalGrid"></div>
+      <button class="btn-primary-sm" id="closeMoodHistory">Chiudi</button>
+    </div>
+  </div>
+
+<script src="app.js"></script>
+</body>
+</html>
