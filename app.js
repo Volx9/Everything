@@ -363,63 +363,229 @@ document.getElementById('calNext').addEventListener('click', ()=>{
 renderCalendar();
 renderAppts();
 
-// ---------- FITNESS ----------
-const FITNESS_KEY = 'ember_fitness_v1';
-const WEEKDAYS_IT = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+// ---------- FITNESS: SCHEDA (dati fissi dalla scheda di Pietro) ----------
+const WORKOUT_PLAN = {
+  lunedi: { label:'Upper A', exercises:[
+    { id:'lun_1', name:'Panca piana (bilanciere o manubri)', sets:'4 x 6-8', rec:'2 min' },
+    { id:'lun_2', name:'Trazioni alla sbarra o lat machine', sets:'4 x 8-10', rec:'2 min' },
+    { id:'lun_3', name:'Military press manubri', sets:'3 x 8-10', rec:'90 sec' },
+    { id:'lun_4', name:'Rematore bilanciere o manubrio', sets:'3 x 8-10', rec:'90 sec' },
+    { id:'lun_5', name:'Croci ai cavi o manubri', sets:'3 x 12-15', rec:'60 sec' },
+    { id:'lun_6', name:'Curl bicipiti manubri', sets:'3 x 10-12', rec:'60 sec' },
+    { id:'lun_7', name:'Push down tricipiti ai cavi', sets:'3 x 10-12', rec:'60 sec' }
+  ]},
+  martedi: { label:'Lower A', exercises:[
+    { id:'mar_1', name:'Leg press (o hip thrust con bilanciere)', sets:'4 x 8-10', rec:'2 min' },
+    { id:'mar_2', name:'Stacco rumeno (RDL)', sets:'3 x 8-10', rec:'2 min' },
+    { id:'mar_3', name:'Leg extension, carico leggero-moderato', sets:'3 x 12-15', rec:'60 sec' },
+    { id:'mar_4', name:'Affondi con manubri', sets:'3 x 10 per gamba', rec:'90 sec' },
+    { id:'mar_5', name:'Leg curl o ponte glutei', sets:'3 x 12-15', rec:'60 sec' },
+    { id:'mar_6', name:'Calf raise in piedi', sets:'4 x 15-20', rec:'45 sec' },
+    { id:'mar_7', name:'Plank', sets:'3 x max', rec:'45 sec' }
+  ]},
+  giovedi: { label:'Upper B', exercises:[
+    { id:'gio_1', name:'Panca inclinata con manubri', sets:'4 x 8-10', rec:'90 sec' },
+    { id:'gio_2', name:'Trazioni presa larga (o lat machine)', sets:'4 x 8-10', rec:'90 sec' },
+    { id:'gio_3', name:'Arnold press o military press', sets:'3 x 10-12', rec:'90 sec' },
+    { id:'gio_4', name:'Rematore manubrio monolaterale', sets:'3 x 10-12', rec:'90 sec' },
+    { id:'gio_5', name:'Alzate laterali', sets:'3 x 12-15', rec:'60 sec' },
+    { id:'gio_6', name:'Curl bicipiti bilanciere', sets:'3 x 10-12', rec:'60 sec' },
+    { id:'gio_7', name:'Dip su panca o French press', sets:'3 x 10-12', rec:'60 sec' }
+  ]},
+  venerdi: { label:'Lower B', exercises:[
+    { id:'ven_1', name:'Stacco da terra', sets:'4 x 5-6', rec:'2-3 min' },
+    { id:'ven_2', name:'Step-up su gradino basso', sets:'3 x 10 per gamba', rec:'90 sec' },
+    { id:'ven_3', name:'Leg extension (o affondi camminati)', sets:'3 x 12-15', rec:'60 sec' },
+    { id:'ven_4', name:'Hip thrust o ponte glutei con bilanciere', sets:'3 x 10-12', rec:'90 sec' },
+    { id:'ven_5', name:'Calf raise seduto o in piedi', sets:'4 x 15-20', rec:'45 sec' },
+    { id:'ven_6', name:'Addome (crunch o ai cavi)', sets:'3 x 15', rec:'45 sec' }
+  ]}
+};
+const WORKOUT_DAYS_ORDER = ['lunedi','martedi','giovedi','venerdi'];
+const WORKOUT_DAY_LABELS = { lunedi:'Lun', martedi:'Mar', giovedi:'Gio', venerdi:'Ven' };
+const JS_WEEKDAY_TO_PLAN = { 1:'lunedi', 2:'martedi', 4:'giovedi', 5:'venerdi' };
 
-function loadFitness(){
+const WORKOUT_LOG_KEY = 'ember_workout_v1';
+
+function loadWorkoutLogs(){
   try{
-    const raw = localStorage.getItem(FITNESS_KEY);
+    const raw = localStorage.getItem(WORKOUT_LOG_KEY);
     return raw ? JSON.parse(raw) : {};
-  }catch(e){
-    return {};
-  }
+  }catch(e){ return {}; }
 }
-function saveFitness(data){
-  localStorage.setItem(FITNESS_KEY, JSON.stringify(data));
+function saveWorkoutLogs(data){
+  localStorage.setItem(WORKOUT_LOG_KEY, JSON.stringify(data));
 }
 
-let fitnessData = loadFitness();
-let selectedWeekday = (new Date().getDay() + 6) % 7;
+let workoutLogs = loadWorkoutLogs();
+let selectedWorkoutDay = JS_WEEKDAY_TO_PLAN[new Date().getDay()] || 'lunedi';
 
-function renderWeekdayRow(){
-  const row = document.getElementById('weekdayRow');
+function renderWorkoutDayRow(){
+  const row = document.getElementById('workoutDayRow');
   row.innerHTML = '';
-  const todayIdx = (new Date().getDay() + 6) % 7;
+  const todayPlanDay = JS_WEEKDAY_TO_PLAN[new Date().getDay()];
 
-  WEEKDAYS_IT.forEach((label, idx)=>{
+  WORKOUT_DAYS_ORDER.forEach(day=>{
     const pill = document.createElement('div');
     pill.className = 'weekday-pill';
-    if (idx === todayIdx) pill.classList.add('today');
-    if (idx === selectedWeekday) pill.classList.add('selected');
-    pill.textContent = label;
+    if (day === todayPlanDay) pill.classList.add('today');
+    if (day === selectedWorkoutDay) pill.classList.add('selected');
+    pill.textContent = WORKOUT_DAY_LABELS[day];
     pill.addEventListener('click', ()=>{
-      selectedWeekday = idx;
-      renderWeekdayRow();
-      loadFitnessDay();
+      selectedWorkoutDay = day;
+      renderWorkoutDayRow();
+      renderExerciseList();
     });
     row.appendChild(pill);
   });
 }
 
-function loadFitnessDay(){
-  const day = fitnessData[selectedWeekday] || { workout:'', diet:'' };
-  document.getElementById('fitWorkout').value = day.workout || '';
-  document.getElementById('fitDiet').value = day.diet || '';
+// trova l'ultimo peso registrato per un esercizio, in una data precedente a oggi
+function getPreviousWeight(exerciseId){
+  const todayStr = todayKey();
+  const dates = Object.keys(workoutLogs)
+    .filter(d => d !== todayStr && workoutLogs[d].weights && workoutLogs[d].weights[exerciseId] != null)
+    .sort()
+    .reverse();
+  if (dates.length === 0) return null;
+  return { date: dates[0], weight: workoutLogs[dates[0]].weights[exerciseId] };
 }
 
-function saveFitnessDay(){
-  fitnessData[selectedWeekday] = {
-    workout: document.getElementById('fitWorkout').value,
-    diet: document.getElementById('fitDiet').value
-  };
-  saveFitness(fitnessData);
+function renderExerciseList(){
+  const plan = WORKOUT_PLAN[selectedWorkoutDay];
+  document.getElementById('workoutDayLabel').textContent = plan.label;
+
+  const container = document.getElementById('exerciseList');
+  container.innerHTML = '';
+
+  const todayEntry = workoutLogs[todayKey()];
+  const todayWeights = (todayEntry && todayEntry.day === selectedWorkoutDay) ? todayEntry.weights : {};
+
+  plan.exercises.forEach(ex=>{
+    const prev = getPreviousWeight(ex.id);
+    const row = document.createElement('div');
+    row.className = 'exercise-row';
+    row.innerHTML = `
+      <div class="exercise-name">${ex.name}</div>
+      <div class="exercise-meta">${ex.sets} · rec. ${ex.rec}</div>
+      <div class="exercise-input-wrap">
+        <input type="number" class="exercise-weight-input" step="0.5" placeholder="kg" data-id="${ex.id}" value="${todayWeights[ex.id] != null ? todayWeights[ex.id] : ''}">
+        <div class="exercise-prev">${prev ? `Sett. scorsa: ${prev.weight}kg` : 'Nessun dato precedente'}</div>
+      </div>
+    `;
+    container.appendChild(row);
+  });
 }
 
-document.getElementById('saveFitBtn').addEventListener('click', saveFitnessDay);
+function saveWorkoutToday(){
+  const inputs = document.querySelectorAll('.exercise-weight-input');
+  const weights = {};
+  inputs.forEach(inp=>{
+    if (inp.value !== '') weights[inp.dataset.id] = parseFloat(inp.value);
+  });
+  workoutLogs[todayKey()] = { day: selectedWorkoutDay, weights };
+  saveWorkoutLogs(workoutLogs);
+  renderExerciseList();
+}
 
-renderWeekdayRow();
-loadFitnessDay();
+document.getElementById('saveWorkoutBtn').addEventListener('click', saveWorkoutToday);
+
+renderWorkoutDayRow();
+renderExerciseList();
+
+// ---------- FITNESS: PESO CORPOREO ----------
+const WEIGHT_KEY = 'ember_weight_v1';
+
+function loadWeights(){
+  try{
+    const raw = localStorage.getItem(WEIGHT_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){ return {}; }
+}
+function saveWeights(data){
+  localStorage.setItem(WEIGHT_KEY, JSON.stringify(data));
+}
+
+let weights = loadWeights();
+
+function renderWeightValue(){
+  const dates = Object.keys(weights).sort().reverse();
+  const el = document.getElementById('weightValue');
+  if (dates.length === 0){
+    el.innerHTML = '-- <span class="unit">kg</span>';
+    return;
+  }
+  el.innerHTML = `${weights[dates[0]]} <span class="unit">kg</span>`;
+}
+
+function saveWeightToday(){
+  const input = document.getElementById('weightInput');
+  const val = parseFloat(input.value);
+  if (isNaN(val)) return;
+  weights[todayKey()] = val;
+  saveWeights(weights);
+  input.value = '';
+  renderWeightValue();
+}
+
+document.getElementById('saveWeightBtn').addEventListener('click', saveWeightToday);
+renderWeightValue();
+
+// ---------- FITNESS: STORICO PESO ----------
+let weightCalDate = new Date();
+
+function renderWeightCalendar(){
+  const y = weightCalDate.getFullYear();
+  const m = weightCalDate.getMonth();
+  document.getElementById('weightCalTitle').textContent = `${MONTHS_IT[m]} ${y}`;
+
+  const grid = document.getElementById('weightCalGrid');
+  grid.innerHTML = '';
+
+  const firstDay = new Date(y, m, 1);
+  const startOffset = (firstDay.getDay() + 6) % 7;
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const todayStr = todayKey();
+
+  for (let i = 0; i < startOffset; i++){
+    const empty = document.createElement('div');
+    empty.className = 'cal-cell empty';
+    grid.appendChild(empty);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++){
+    const key = dateKey(y, m, d);
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell';
+    if (key === todayStr) cell.classList.add('today');
+
+    const w = weights[key];
+    cell.innerHTML = `<span class="cal-daynum">${d}</span>${w != null ? `<span class="weight-cell">${w}</span>` : ''}`;
+    grid.appendChild(cell);
+  }
+}
+
+document.getElementById('openWeightHistory').addEventListener('click', ()=>{
+  weightCalDate = new Date();
+  renderWeightCalendar();
+  document.getElementById('weightHistoryOverlay').classList.add('visible');
+});
+document.getElementById('closeWeightHistory').addEventListener('click', ()=>{
+  document.getElementById('weightHistoryOverlay').classList.remove('visible');
+});
+document.getElementById('weightHistoryOverlay').addEventListener('click', (e)=>{
+  if (e.target.id === 'weightHistoryOverlay'){
+    document.getElementById('weightHistoryOverlay').classList.remove('visible');
+  }
+});
+document.getElementById('weightCalPrev').addEventListener('click', ()=>{
+  weightCalDate.setMonth(weightCalDate.getMonth() - 1);
+  renderWeightCalendar();
+});
+document.getElementById('weightCalNext').addEventListener('click', ()=>{
+  weightCalDate.setMonth(weightCalDate.getMonth() + 1);
+  renderWeightCalendar();
+});
 
 // ---------- HOME ----------
 
