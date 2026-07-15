@@ -241,30 +241,78 @@
   .note-card .note-text{ font-size:14px; white-space:pre-wrap; line-height:1.5; }
   .note-card .del-btn{ margin-top:8px; }
 
-  /* ---------- FITNESS ---------- */
-  .weekday-row{
-    display:grid; grid-template-columns:repeat(7,1fr); gap:6px;
-    margin:14px 0 20px;
-  }
+  /* ---------- FITNESS: PESO ---------- */
   .weekday-pill{
     background:var(--surface); border:1px solid var(--border); color:var(--text-dim);
     border-radius:10px; padding:10px 0; font-size:12px; text-align:center;
   }
   .weekday-pill.today{ border-color:var(--ember-dim); }
   .weekday-pill.selected{ background:var(--ember); color:#1a1408; font-weight:600; border-color:var(--ember); }
-  .fit-block{ margin-bottom:20px; }
-  .fit-block textarea{
-    width:100%; min-height:110px; background:var(--surface);
-    border:1px solid var(--border); border-radius:14px; color:var(--text);
-    font-family:'Inter',sans-serif; font-size:14px; padding:14px;
-    resize:vertical; line-height:1.5;
+
+  .weight-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:18px; margin:14px 0 22px;
   }
-  .fit-block textarea::placeholder{ color:var(--text-dim); }
-  .fit-save{
+  .weight-value-row{
+    display:flex; align-items:baseline; justify-content:space-between; margin:6px 0 14px;
+  }
+  .weight-value{ font-family:'Fraunces',serif; font-size:32px; font-weight:600; color:var(--ember); }
+  .weight-value .unit{ font-size:16px; color:var(--text-dim); font-weight:400; margin-left:4px; }
+  .weight-input-row{ display:flex; gap:8px; }
+  .weight-input-row input{
+    flex:1; background:var(--surface-2); border:1px solid var(--border);
+    color:var(--text); border-radius:10px; padding:11px 12px; font-size:14px;
+  }
+  .weight-input-row button{
     background:var(--ember); color:#1a1408; border:none;
-    border-radius:12px; padding:11px 18px; font-weight:600; font-size:14px;
-    margin-top:16px;
+    border-radius:10px; padding:0 18px; font-weight:600; font-size:14px;
   }
+
+  /* ---------- FITNESS: SCHEDA ---------- */
+  .workout-day-row{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:6px;
+    margin:14px 0 16px;
+  }
+  .workout-day-row .weekday-pill{ font-size:11px; padding:10px 4px; }
+  .workout-day-label{
+    font-family:'Fraunces',serif; font-size:15px; color:var(--text-dim);
+    margin:0 4px 14px;
+  }
+  .exercise-row{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:14px 16px; margin-bottom:10px;
+  }
+  .exercise-name{ font-size:14px; font-weight:600; }
+  .exercise-meta{ font-size:12px; color:var(--text-dim); margin-top:2px; }
+  .exercise-input-wrap{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top:10px; gap:10px;
+  }
+  .exercise-weight-input{
+    width:84px; background:var(--surface-2); border:1px solid var(--border);
+    color:var(--text); border-radius:10px; padding:9px 10px; font-size:14px;
+  }
+  .exercise-prev{ font-size:12px; color:var(--text-dim); }
+
+  /* ---------- FITNESS: ALIMENTAZIONE ---------- */
+  .macro-row{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:8px;
+    margin:14px 0 20px;
+  }
+  .macro-cell{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:10px 6px; text-align:center;
+  }
+  .macro-cell .val{ font-family:'Fraunces',serif; font-weight:600; font-size:15px; color:var(--ember); }
+  .macro-cell .lbl{ font-size:10px; color:var(--text-dim); margin-top:2px; }
+  .meal-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:14px 16px; margin-bottom:10px;
+  }
+  .meal-card .meal-title{ font-size:14px; font-weight:600; display:flex; justify-content:space-between; }
+  .meal-card .meal-kcal{ font-size:12px; color:var(--ember); font-weight:600; }
+  .meal-card .meal-items{ font-size:13px; color:var(--text-dim); line-height:1.6; margin-top:6px; }
+  .meal-note{ font-size:12px; color:var(--text-dim); margin:14px 4px 4px; line-height:1.6; }
 
   /* ---------- NOTIZIE ---------- */
   .news-cat{ margin:14px 0 20px; }
@@ -401,6 +449,22 @@
   .cal-daynum{ font-size:9px; color:var(--text-dim); }
   .emoji-cell{ font-size:15px; margin-top:1px; }
 
+  #weightHistoryOverlay{
+    position:fixed; inset:0; z-index:90;
+    background:rgba(6,7,8,0.6); backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center;
+    padding:24px; opacity:0; visibility:hidden;
+    transition:opacity .3s ease, visibility .3s ease;
+  }
+  #weightHistoryOverlay.visible{ opacity:1; visibility:visible; }
+  .weight-history-modal{
+    background:var(--surface); border:1px solid var(--border); border-radius:20px;
+    padding:20px 18px; width:100%; max-width:340px;
+    transform:scale(.94) translateY(8px); transition:transform .3s ease;
+  }
+  #weightHistoryOverlay.visible .weight-history-modal{ transform:none; }
+  .weight-cell{ font-size:10px; color:var(--ember); font-weight:600; margin-top:1px; }
+
   .weather-chip{
     display:flex; align-items:center; gap:6px;
     font-size:12px; color:var(--text-dim);
@@ -503,20 +567,56 @@
       </section>
 
       <section class="view" id="view-fitness">
-        <div class="section-title">Giorno</div>
-        <div class="weekday-row" id="weekdayRow"></div>
-
-        <div class="fit-block">
-          <div class="section-title" style="margin-top:0">Allenamento</div>
-          <textarea id="fitWorkout" placeholder="Es. Petto e tricipiti: panca piana 4x8, croci 3x12..."></textarea>
+        <div class="section-title" style="margin-top:0">Peso corporeo</div>
+        <div class="weight-card">
+          <div class="weight-value-row">
+            <div class="weight-value" id="weightValue">-- <span class="unit">kg</span></div>
+            <button class="btn-text" id="openWeightHistory">Storico →</button>
+          </div>
+          <div class="weight-input-row">
+            <input type="number" id="weightInput" step="0.1" placeholder="Es. 55.4">
+            <button id="saveWeightBtn">Salva</button>
+          </div>
         </div>
 
-        <div class="fit-block">
-          <div class="section-title" style="margin-top:0">Alimentazione</div>
-          <textarea id="fitDiet" placeholder="Es. Colazione: fiocchi d'avena e yogurt. Pranzo: riso e pollo..."></textarea>
+        <div class="section-title">Scheda</div>
+        <div class="workout-day-row" id="workoutDayRow"></div>
+        <div class="workout-day-label" id="workoutDayLabel"></div>
+        <div id="exerciseList"></div>
+        <button class="fit-save" id="saveWorkoutBtn">Salva allenamento di oggi</button>
+
+        <div class="section-title">Alimentazione</div>
+        <div class="macro-row">
+          <div class="macro-cell"><div class="val">~2750</div><div class="lbl">kcal</div></div>
+          <div class="macro-cell"><div class="val">130-140</div><div class="lbl">proteine g</div></div>
+          <div class="macro-cell"><div class="val">350-370</div><div class="lbl">carbo g</div></div>
+          <div class="macro-cell"><div class="val">75-85</div><div class="lbl">grassi g</div></div>
         </div>
 
-        <button class="fit-save" id="saveFitBtn">Salva giorno</button>
+        <div class="meal-card">
+          <div class="meal-title"><span>Colazione (pre-workout)</span><span class="meal-kcal">~730-750 kcal</span></div>
+          <div class="meal-items">100g pane · 3 uova · 30g formaggio · 1 banana · miele o marmellata (opz.)</div>
+        </div>
+        <div class="meal-card">
+          <div class="meal-title"><span>Pranzo</span><span class="meal-kcal">~800 kcal</span></div>
+          <div class="meal-items">100g riso (a crudo) · 200g petto di pollo · 10g olio d'oliva</div>
+        </div>
+        <div class="meal-card">
+          <div class="meal-title"><span>Spuntino pre/post workout</span><span class="meal-kcal">~400 kcal</span></div>
+          <div class="meal-items">150g yogurt greco intero · 1 mela · 30g mandorle o noci</div>
+        </div>
+        <div class="meal-card">
+          <div class="meal-title"><span>Cena</span><span class="meal-kcal">~550 kcal</span></div>
+          <div class="meal-items">250g patate lesse (o riso) · 150g carne magra o salmone · 5g olio d'oliva</div>
+        </div>
+        <div class="meal-card">
+          <div class="meal-title"><span>Spuntino serale</span><span class="meal-kcal">~250 kcal</span></div>
+          <div class="meal-items">250ml latte o 1 yogurt · 30g cioccolato fondente 70%+ o frutta secca</div>
+        </div>
+
+        <div class="meal-note">
+          Pesati una volta a settimana, stessa condizione. Se in 2-3 settimane non sali di 0,3-0,5 kg, aumenta un po' le porzioni. Nei giorni senza palestra puoi togliere lo spuntino pre/post workout. Acqua: almeno 2L al giorno.
+        </div>
       </section>
 
       <section class="view" id="view-notizie">
@@ -591,6 +691,21 @@
       </div>
       <div class="cal-grid" id="moodCalGrid"></div>
       <button class="btn-primary-sm" id="closeMoodHistory">Chiudi</button>
+    </div>
+  </div>
+
+  <div id="weightHistoryOverlay">
+    <div class="weight-history-modal">
+      <div class="cal-header">
+        <button id="weightCalPrev" aria-label="Mese precedente">‹</button>
+        <div class="cal-title" id="weightCalTitle"></div>
+        <button id="weightCalNext" aria-label="Mese successivo">›</button>
+      </div>
+      <div class="cal-weekdays">
+        <div>L</div><div>M</div><div>M</div><div>G</div><div>V</div><div>S</div><div>D</div>
+      </div>
+      <div class="cal-grid" id="weightCalGrid"></div>
+      <button class="btn-primary-sm" id="closeWeightHistory">Chiudi</button>
     </div>
   </div>
 
