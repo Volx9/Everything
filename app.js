@@ -50,6 +50,7 @@ function switchView(name){
     renderHomeAgenda();
     renderMoodSummary();
     if (typeof fetchWeather === 'function') fetchWeather();
+    if (typeof renderHomeWeight === 'function') renderHomeWeight();
   }
 }
 document.querySelectorAll('.nav-btn').forEach(btn=>{
@@ -440,15 +441,20 @@ function renderWorkoutDayRow(){
   });
 }
 
-// trova l'ultimo peso registrato per un esercizio, in una data precedente a oggi
-function getPreviousWeight(exerciseId){
+// trova l'ultima sessione registrata per un esercizio, in una data precedente a oggi
+function getPreviousEntry(exerciseId){
   const todayStr = todayKey();
   const dates = Object.keys(workoutLogs)
     .filter(d => d !== todayStr && workoutLogs[d].weights && workoutLogs[d].weights[exerciseId] != null)
     .sort()
     .reverse();
   if (dates.length === 0) return null;
-  return { date: dates[0], weight: workoutLogs[dates[0]].weights[exerciseId] };
+  const entry = workoutLogs[dates[0]];
+  return {
+    date: dates[0],
+    weight: entry.weights[exerciseId],
+    sets: (entry.sets && entry.sets[exerciseId]) || ''
+  };
 }
 
 function renderExerciseList(){
@@ -460,30 +466,41 @@ function renderExerciseList(){
 
   const todayEntry = workoutLogs[todayKey()];
   const todayWeights = (todayEntry && todayEntry.day === selectedWorkoutDay) ? todayEntry.weights : {};
+  const todaySets = (todayEntry && todayEntry.day === selectedWorkoutDay && todayEntry.sets) ? todayEntry.sets : {};
 
   plan.exercises.forEach(ex=>{
-    const prev = getPreviousWeight(ex.id);
+    const prev = getPreviousEntry(ex.id);
+    const prevText = prev
+      ? `Sett. scorsa: ${prev.weight}kg${prev.sets ? ' · ' + prev.sets : ''}`
+      : 'Nessun dato precedente';
+
     const row = document.createElement('div');
     row.className = 'exercise-row';
     row.innerHTML = `
       <div class="exercise-name">${ex.name}</div>
       <div class="exercise-meta">${ex.sets} · rec. ${ex.rec}</div>
-      <div class="exercise-input-wrap">
+      <div class="exercise-inputs">
         <input type="number" class="exercise-weight-input" step="0.5" placeholder="kg" data-id="${ex.id}" value="${todayWeights[ex.id] != null ? todayWeights[ex.id] : ''}">
-        <div class="exercise-prev">${prev ? `Sett. scorsa: ${prev.weight}kg` : 'Nessun dato precedente'}</div>
+        <input type="text" class="exercise-sets-input" placeholder="serie es. 4x8" data-id="${ex.id}" value="${todaySets[ex.id] != null ? todaySets[ex.id] : ''}">
       </div>
+      <div class="exercise-prev">${prevText}</div>
     `;
     container.appendChild(row);
   });
 }
 
 function saveWorkoutToday(){
-  const inputs = document.querySelectorAll('.exercise-weight-input');
-  const weights = {};
-  inputs.forEach(inp=>{
-    if (inp.value !== '') weights[inp.dataset.id] = parseFloat(inp.value);
+  const weightInputs = document.querySelectorAll('.exercise-weight-input');
+  const setsInputs = document.querySelectorAll('.exercise-sets-input');
+  const weightsData = {};
+  const setsData = {};
+  weightInputs.forEach(inp=>{
+    if (inp.value !== '') weightsData[inp.dataset.id] = parseFloat(inp.value);
   });
-  workoutLogs[todayKey()] = { day: selectedWorkoutDay, weights };
+  setsInputs.forEach(inp=>{
+    if (inp.value.trim() !== '') setsData[inp.dataset.id] = inp.value.trim();
+  });
+  workoutLogs[todayKey()] = { day: selectedWorkoutDay, weights: weightsData, sets: setsData };
   saveWorkoutLogs(workoutLogs);
   renderExerciseList();
 }
@@ -511,11 +528,18 @@ let weights = loadWeights();
 function renderWeightValue(){
   const dates = Object.keys(weights).sort().reverse();
   const el = document.getElementById('weightValue');
+  const updatedEl = document.getElementById('weightUpdated');
   if (dates.length === 0){
     el.innerHTML = '-- <span class="unit">kg</span>';
+    updatedEl.textContent = 'Inserisci il primo check peso';
     return;
   }
   el.innerHTML = `${weights[dates[0]]} <span class="unit">kg</span>`;
+
+  const daysAgo = Math.round((new Date(todayKey()) - new Date(dates[0])) / 86400000);
+  if (daysAgo <= 0) updatedEl.textContent = 'Aggiornato oggi';
+  else if (daysAgo === 1) updatedEl.textContent = 'Aggiornato ieri';
+  else updatedEl.textContent = `Aggiornato ${daysAgo} giorni fa`;
 }
 
 function saveWeightToday(){
@@ -745,11 +769,24 @@ function maybeShowMoodPrompt(){
   }
 }
 
+function renderHomeWeight(){
+  const el = document.getElementById('homeWeightCard');
+  if (!el) return;
+  const dates = Object.keys(weights).sort().reverse();
+  if (dates.length === 0){
+    el.innerHTML = `<span>Nessun peso registrato — tocca per aggiungerlo</span>`;
+  } else {
+    el.innerHTML = `<span>Peso attuale: <strong>${weights[dates[0]]} kg</strong></span>`;
+  }
+}
+document.getElementById('homeWeightCard').addEventListener('click', ()=> switchView('fitness'));
+
 // ---------- HOME: INIT ----------
 renderHomeQuote();
 renderHomeStreaks();
 renderHomeAgenda();
 renderMoodSummary();
+renderHomeWeight();
 
 // ---------- HOME: METEO (Verona, nessuna chiave API richiesta) ----------
 const WEATHER_CACHE_KEY = 'ember_weather_v1';
