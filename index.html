@@ -254,10 +254,11 @@
     padding:18px; margin:14px 0 22px;
   }
   .weight-value-row{
-    display:flex; align-items:baseline; justify-content:space-between; margin:6px 0 14px;
+    display:flex; align-items:flex-start; justify-content:space-between; margin:6px 0 14px;
   }
   .weight-value{ font-family:'Fraunces',serif; font-size:32px; font-weight:600; color:var(--ember); }
   .weight-value .unit{ font-size:16px; color:var(--text-dim); font-weight:400; margin-left:4px; }
+  .weight-updated{ font-size:11px; color:var(--text-dim); margin-top:2px; }
   .weight-input-row{ display:flex; gap:8px; }
   .weight-input-row input{
     flex:1; background:var(--surface-2); border:1px solid var(--border);
@@ -284,15 +285,12 @@
   }
   .exercise-name{ font-size:14px; font-weight:600; }
   .exercise-meta{ font-size:12px; color:var(--text-dim); margin-top:2px; }
-  .exercise-input-wrap{
-    display:flex; align-items:center; justify-content:space-between;
-    margin-top:10px; gap:10px;
-  }
-  .exercise-weight-input{
-    width:84px; background:var(--surface-2); border:1px solid var(--border);
+  .exercise-inputs{ display:flex; gap:8px; margin-top:10px; }
+  .exercise-inputs input{
+    flex:1; background:var(--surface-2); border:1px solid var(--border);
     color:var(--text); border-radius:10px; padding:9px 10px; font-size:14px;
   }
-  .exercise-prev{ font-size:12px; color:var(--text-dim); }
+  .exercise-prev{ font-size:12px; color:var(--text-dim); margin-top:8px; }
 
   /* ---------- FITNESS: ALIMENTAZIONE ---------- */
   .macro-row{
@@ -529,6 +527,11 @@
         </div>
         <div class="mood-summary home-card" id="moodSummary"></div>
         <button class="btn-text home-card" id="openMoodHistory">Vedi storico →</button>
+
+        <div class="home-section-head home-card" style="margin-top:26px">
+          <div class="section-title">Peso</div>
+        </div>
+        <div class="mood-summary home-card" id="homeWeightCard" style="cursor:pointer"></div>
       </section>
 
       <section class="view" id="view-streak">
@@ -570,7 +573,10 @@
         <div class="section-title" style="margin-top:0">Peso corporeo</div>
         <div class="weight-card">
           <div class="weight-value-row">
-            <div class="weight-value" id="weightValue">-- <span class="unit">kg</span></div>
+            <div>
+              <div class="weight-value" id="weightValue">-- <span class="unit">kg</span></div>
+              <div class="weight-updated" id="weightUpdated"></div>
+            </div>
             <button class="btn-text" id="openWeightHistory">Storico →</button>
           </div>
           <div class="weight-input-row">
